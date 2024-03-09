@@ -9,7 +9,6 @@ contains
         integer(i8), intent(in) :: num_variables
         integer(i8), intent(in) :: batch_size
         real(r8), dimension(batch_size, num_variables), intent(in) :: nn_variables
-        integer(i8) :: i
         logical :: itexists 
 
         inquire(file=filename, exist=itexists)
