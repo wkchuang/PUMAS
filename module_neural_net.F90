@@ -36,10 +36,10 @@ contains
         integer :: i, j, num_examples
         real(kind=r8) :: alpha, beta
         external :: dgemm
-        alpha = 1
-        beta = 1
-        dense_output = 0
-        output = 0
+        alpha = 1_r8
+        beta = 1_r8
+        dense_output = 0_r8
+        output = 0_r8
         num_examples = size(input, 1)
         call dgemm('n', 'n', num_examples, layer%output_size, layer%input_size, &
             alpha, input, num_examples, layer%weights, layer%input_size, beta, dense_output, num_examples)
@@ -73,9 +73,9 @@ contains
         real(kind=r8), dimension(size(input, 1), size(input, 2)), intent(out) :: output
 
         real(kind=r8), dimension(size(input, 1)) :: softmax_sum
-        real(kind=r8), parameter :: selu_alpha = 1.6732
-        real(kind=r8), parameter :: selu_lambda = 1.0507
-        real(kind=r8), parameter :: zero = 0.0
+        real(kind=r8), parameter :: selu_alpha = 1.6732_r8
+        real(kind=r8), parameter :: selu_lambda = 1.0507_r8
+        real(kind=r8), parameter :: zero = 0.0_r8
         integer :: i, j
         select case (activation_type)
             case (0)
@@ -87,7 +87,7 @@ contains
                     end do
                 end do
             case (2)
-                output = 1.0 / (1.0 + dexp(-input))
+                output = 1.0_r8 / (1.0_r8 + dexp(-input))
             case (3)
                 do i=1,size(input, 1)
                     do j=1, size(input,2)
@@ -331,7 +331,7 @@ contains
         end do
     end subroutine quantile_inv_transform
 
-    subroutine neural_net_predict(input, neural_net_model, prediction)
+    subroutine neural_net_predict(input, neural_net_model, prediction, iulog)
         ! neural_net_predict
         ! Description: generate prediction from neural network model for an arbitrary set of input values
         !
@@ -347,6 +347,7 @@ contains
         integer :: input_size
         integer :: batch_index_size
         integer, allocatable :: batch_indices(:)
+        integer,  intent(in)  :: iulog
         type(DenseData) :: neural_net_data(size(neural_net_model))
         input_size = size(input, 1)
         num_layers = size(neural_net_model)

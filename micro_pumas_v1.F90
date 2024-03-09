@@ -2089,7 +2089,7 @@ subroutine micro_pumas_tend ( &
                                                   proc_rates%qctend_TAU(1:mgncol,k), &
                                                   proc_rates%qrtend_TAU(1:mgncol,k), &
                                                   proc_rates%nctend_TAU(1:mgncol,k), &
-                                                  proc_rates%nrtend_TAU(1:mgncol,k))
+                                                  proc_rates%nrtend_TAU(1:mgncol,k), iulog)
 
         call ML_fixer_calc(mgncol, deltatin, qcic(1:mgncol,k), ncic(1:mgncol,k), &
                            qric(1:mgncol,k), nric(1:mgncol,k), &

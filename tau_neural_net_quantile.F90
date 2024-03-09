@@ -4,12 +4,14 @@ module tau_neural_net_quantile
 
     use module_neural_net, only : Dense, init_neural_net, load_quantile_scale_values
     use module_neural_net, only : quantile_transform, quantile_inv_transform, neural_net_predict
+    use tester, only : write_test_values
 
     implicit none
     integer, parameter, public :: i8 = selected_int_kind(18)
-    integer, parameter :: num_inputs = 8
-    integer, parameter :: num_outputs = 4
+    integer, parameter :: num_inputs = 9
+    integer, parameter :: num_outputs = 3
     integer, parameter :: batch_size = 1
+    logical, save :: firstcall = .TRUE. ! for testing. Save variables on first call for comparison to python.
 
     ! Neural networks and scale values saved within the scope of the module.
     ! Need to call initialize_tau_emulators to load weights and tables from disk.
@@ -43,12 +45,11 @@ contains
         call load_quantile_scale_values(trim(stochastic_emulated_filename_output_scale), output_scale_values, iulog, errstring)
         write(iulog,*) "Loaded neural nets scaling values"
 
-        ! testing wkc
     end subroutine initialize_tau_emulators
 
 
     subroutine tau_emulated_cloud_rain_interactions(qc, nc, qr, nr, pgam, lamc, lamr, n0r, rho, lcldm, &
-            precip_frac, mgncol, q_small, qc_tend, qr_tend, nc_tend, nr_tend)
+            precip_frac, mgncol, q_small, qc_tend, qr_tend, nc_tend, nr_tend, iulog)
         ! Calculates emulated tau microphysics tendencies from neural networks.
         !
         ! Input args:
@@ -77,6 +78,9 @@ contains
         real(r8), dimension(batch_size, num_inputs) :: nn_inputs, nn_quantile_inputs
         real(r8), dimension(batch_size, num_outputs) :: nn_quantile_outputs, nn_outputs
         real(r8), parameter :: dt = 1800.0
+        integer,  intent(in) :: iulog
+        character(len=128) :: filename
+
         do i = 1, mgncol
             if (qc(i) >= q_small) then
                 nn_inputs(1, 1) = qc(i)
@@ -87,16 +91,43 @@ contains
                 nn_inputs(1, 6) = lamc(i)
                 nn_inputs(1, 7) = lamr(i)
                 nn_inputs(1, 8) = n0r(i)
-                ! nn_inputs(1, 5) = rho(i)
+                nn_inputs(1, 9) = rho(i)
                 ! nn_inputs(1, 6) = precip_frac(i)
                 ! nn_inputs(1, 7) = lcldm(i)
+
+                ! Testing:
+                ! Output the inputs to a file for comparison to Python NN
+                if (firstcall) then
+                    filename="test_input.dat"
+                    call write_test_values(filename, num_inputs, nn_inputs, batch_size)
+                endif
+                
                 call quantile_transform(nn_inputs, input_scale_values, nn_quantile_inputs)
-                call neural_net_predict(nn_quantile_inputs, q_all, nn_quantile_outputs)
+
+                if (firstcall) then
+                    filename="test_quantile_input.dat"
+                    call write_test_values(filename, num_inputs, nn_quantile_inputs, batch_size)
+                endif
+
+                call neural_net_predict(nn_quantile_inputs, q_all, nn_quantile_outputs, iulog)
+
+                if (firstcall) then
+                    filename="test_quantile_output.dat"
+                    call write_test_values(filename, num_outputs, nn_quantile_outputs, batch_size)
+                endif
+
                 call quantile_inv_transform(nn_quantile_outputs, output_scale_values, nn_outputs)
+
+                if (firstcall) then
+                    filename="test_output.dat"
+                    call write_test_values(filename, num_outputs, nn_outputs, batch_size)
+                endif
+                
                 qc_tend(i) = nn_outputs(1, 1)
                 qr_tend(i) = -qc_tend(i)
-                nc_tend(i) = nn_outputs(1, 3)
-                nr_tend(i) = nn_outputs(1, 4)
+                nc_tend(i) = nn_outputs(1, 2)
+                nr_tend(i) = nn_outputs(1, 3)
+                firstcall = .FALSE.
             else
                 qc_tend(i) = 0._r8
                 qr_tend(i) = 0._r8
@@ -104,5 +135,6 @@ contains
                 nr_tend(i) = 0._r8
             end if
         end do
+
     end subroutine tau_emulated_cloud_rain_interactions
 end module tau_neural_net_quantile
