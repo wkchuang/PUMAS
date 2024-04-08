@@ -1196,7 +1196,7 @@ subroutine micro_pumas_tend ( &
   !$acc               proc_rates%qr_in_TAU,proc_rates%nr_in_TAU,              &
   !$acc               proc_rates%lamc_out,proc_rates%lamr_out,                &
   !$acc               proc_rates%pgam_out,proc_rates%n0r_out,                 &
-  !$acc               proc_rates%nr_out,proc_rates%qctend_KK2000,             &
+  !$acc               proc_rates%qctend_KK2000,             &
   !$acc               proc_rates%nctend_KK2000,proc_rates%qrtend_KK2000,      &
   !$acc               proc_rates%nrtend_KK2000,proc_rates%qctend_SB2001,      &
   !$acc               proc_rates%nctend_SB2001,proc_rates%qrtend_SB2001,      &
