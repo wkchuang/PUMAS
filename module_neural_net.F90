@@ -155,7 +155,7 @@ contains
         real (kind=r8), allocatable :: temp_weights(:, :)
 
         errstring = ''
-
+        write(iulog,*) "filename is ", filename
         ! Open netCDF file
         call check(nf90_open(filename, nf90_nowrite, ncid),errstring)
         if (trim(errstring) /= '') return

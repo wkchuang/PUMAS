@@ -336,7 +336,7 @@ subroutine micro_pumas_init( &
      micro_mg_accre_sees_auto_in, micro_mg_implicit_fall_in, &
      nccons_in, nicons_in, ncnst_in, ninst_in, ngcons_in, ngnst_in, &
      nrcons_in, nrnst_in, nscons_in, nsnst_in, &
-     stochastic_emulated_filename_quantile, stochastic_emulated_filename_input_scale, &
+     qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
      stochastic_emulated_filename_output_scale, &
      iulog, errstring)
 
@@ -364,7 +364,7 @@ subroutine micro_pumas_init( &
   real(r8), intent(in)  :: rhmini_in    ! Minimum rh for ice cloud fraction > 0.
   real(r8), intent(in)  :: micro_mg_dcs
 
-!MG3 dense precipitating ice. Note, only 1 can be true, or both false.
+  !MG3 dense precipitating ice. Note, only 1 can be true, or both false.
   logical,  intent(in)  :: micro_mg_do_graupel_in    ! .true. = configure with graupel
                                                    ! .false. = no graupel (hail possible)
   logical,  intent(in)  :: micro_mg_do_hail_in    ! .true. = configure with hail
@@ -392,7 +392,7 @@ subroutine micro_pumas_init( &
   logical,  intent(in)  ::  remove_supersat_in ! If true, remove supersaturation after sedimentation loop
   character(len=*),  intent(in)  ::  warm_rain_in
 
-! IFS-like Switches
+  ! IFS-like Switches
 
   logical, intent(in) :: micro_mg_evap_sed_off_in ! Turn off evaporation/sublimation based on cloud fraction for sedimenting condensate
 
@@ -422,7 +422,7 @@ subroutine micro_pumas_init( &
   logical, intent(in)   :: nscons_in
   real(r8), intent(in)  :: nsnst_in
 
-  character(len=*), intent(in) :: stochastic_emulated_filename_quantile, &
+  character(len=*), intent(in) :: qc_regressor_path, nc_regressor_path, nr_regressor_path, &
                                   stochastic_emulated_filename_input_scale, &
                                   stochastic_emulated_filename_output_scale ! Files for emulated machine learning
 
@@ -555,7 +555,7 @@ subroutine micro_pumas_init( &
   !$acc                accre_sees_auto)
 
   if (trim(warm_rain) == 'emulated') then
-      call initialize_tau_emulators(stochastic_emulated_filename_quantile, stochastic_emulated_filename_input_scale, &
+      call initialize_tau_emulators(qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
                                     stochastic_emulated_filename_output_scale, iulog, errstring)
   end if
 
@@ -1443,7 +1443,7 @@ subroutine micro_pumas_tend ( &
         proc_rates%nmeltstot(i,k)          = 0._r8
         proc_rates%nmeltgtot(i,k)          = 0._r8
 
-!need to zero these out to be totally switchable (for conservation)
+        !need to zero these out to be totally switchable (for conservation)
         psacr(i,k)              = 0._r8
         pracg(i,k)              = 0._r8
         psacwg(i,k)             = 0._r8
@@ -2085,7 +2085,9 @@ subroutine micro_pumas_tend ( &
                                                   pgam(1:mgncol,k), lamc(1:mgncol,k), &
                                                   lamr(1:mgncol,k), n0r(1:mgncol,k), &
                                                   rho(1:mgncol,k), lcldm(1:mgncol,k), &
-                                                  precip_frac(1:mgncol,k), mgncol, qsmall_emulator, &
+                                                  precip_frac(1:mgncol,k), &
+                                                  cldm(1:mgncol,k), freqr(1:mgncol,k), p(1:mgncol,k), &
+                                                  mgncol, qsmall_emulator, &
                                                   proc_rates%qctend_TAU(1:mgncol,k), &
                                                   proc_rates%qrtend_TAU(1:mgncol,k), &
                                                   proc_rates%nctend_TAU(1:mgncol,k), &
