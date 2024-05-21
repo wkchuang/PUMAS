@@ -32,7 +32,7 @@ This will create a directory Github_CAM_PUMAS_Clone in your current working dire
 
 Go into the newly created directory and checkout a modified branch. ::
 ```
-cd Github_CAM_PUMAS_Clone git checkout cam_pumas_development
+cd Github_CAM_PUMAS_Clone git checkout username/my_new_branch
 ```
 From the root of the CAM clone, run the script manage_externals/checkout_externals. ::
 ```
@@ -44,7 +44,7 @@ At this point you have all of the code needed for CAM with the PUMAS microphysic
 
 To make changes to PUMAS, first create a branch for your work in the ESCOMP/PUMAS Github repository (or your fork of this repository) by clicking on the "Branch:master" drop down box on the middle left part of the main page (just below the purble line), and type the name of your new branch into the "Find or create a branch..." text area.
 
-For new branch names, it is generally a good idea to put your Github name first, and then the goal of the branch after a slash. So, a name for a branch to fix conservation bugs might be "katetc/graupel_upgrade". Hit enter, and your new branch is now shown in Github.
+For new branch names, it is generally a good idea to put your Github name first, and then the goal of the branch after a slash. So, a name for a branch to improve graupel tendencies might be "katetc/graupel_upgrade". Hit enter, and your new branch is now shown in Github.
 
 The second step for making changes in PUMAS is to update the source code in the pumas subdirectory to work with this branch. The easiest way to manage this is by using manage_externals. Edit the `Externals_CAM.cfg` file to point to your fork and branch under the `[pumas]` section. Then run `manage_externals/checkout_externals` from the root of your CAM checkout. You can go into your PUMAS branch to make sure that it is checked out correctly. ::
 ```
@@ -61,6 +61,7 @@ This will push your changes to your remote branch. When you have finished with A
 
 
 References
+===========
 Sun, J., Dennis, J. M., Mickelson, S. A., Vanderwende, B., Gettelman, A., & Thayer-Calder, K. (2023). Acceleration of the Parameterization of Unified Microphysics Across Scales (PUMAS) on the graphics processing unit (GPU) with directive-based methods. Journal of Advances in Modeling Earth Systems, 15, e2022MS003515. https://doi.org/10.1029/2022MS003515
 
 Gettelman, A., Morrison, H., Eidhammer, T., Thayer-Calder, K., Sun, J., Forbes, R., McGraw, Z., Zhu, J., Storelvmo, T., and Dennis, J.: Importance of ice nucleation and precipitation on climate with the Parameterization of Unified Microphysics Across Scales version 1 (PUMASv1), Geosci. Model Dev., 16, 1735–1754, https://doi.org/10.5194/gmd-16-1735-2023, 2023.
