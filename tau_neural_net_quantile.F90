@@ -11,7 +11,6 @@ module tau_neural_net_quantile
     integer, parameter :: num_inputs = 9
     integer, parameter :: num_outputs = 3
     integer, parameter :: batch_size = 1
-    logical, save :: firstcall = .TRUE. ! for testing. Save variables on first call for comparison to python.
 
     ! Neural networks and scale values saved within the scope of the module.
     ! Need to call initialize_tau_emulators to load weights and tables from disk.
@@ -104,30 +103,14 @@ contains
                 
                 call quantile_transform(nn_inputs, input_scale_values, nn_quantile_inputs)
 
-                if (firstcall) then
-                    filename="test_quantile_input.dat"
-                    call write_test_values(filename, num_inputs, nn_quantile_inputs, batch_size)
-                endif
-
                 call neural_net_predict(nn_quantile_inputs, q_all, nn_quantile_outputs, iulog)
 
-                if (firstcall) then
-                    filename="test_quantile_output.dat"
-                    call write_test_values(filename, num_outputs, nn_quantile_outputs, batch_size)
-                endif
-
                 call quantile_inv_transform(nn_quantile_outputs, output_scale_values, nn_outputs)
-
-                if (firstcall) then
-                    filename="test_output.dat"
-                    call write_test_values(filename, num_outputs, nn_outputs, batch_size)
-                endif
                 
                 qc_tend(i) = nn_outputs(1, 1)
                 qr_tend(i) = -qc_tend(i)
                 nc_tend(i) = nn_outputs(1, 2)
                 nr_tend(i) = nn_outputs(1, 3)
-                firstcall = .FALSE.
             else
                 qc_tend(i) = 0._r8
                 qr_tend(i) = 0._r8
