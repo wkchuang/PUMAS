@@ -93,13 +93,6 @@ contains
                 nn_inputs(1, 9) = rho(i)
                 ! nn_inputs(1, 6) = precip_frac(i)
                 ! nn_inputs(1, 7) = lcldm(i)
-
-                ! Testing:
-                ! Output the inputs to a file for comparison to Python NN
-                if (firstcall) then
-                    filename="test_input.dat"
-                    call write_test_values(filename, num_inputs, nn_inputs, batch_size)
-                endif
                 
                 call quantile_transform(nn_inputs, input_scale_values, nn_quantile_inputs)
 
