@@ -16,8 +16,8 @@ module tau_neural_net_quantile
     ! Neural networks and scale values saved within the scope of the module.
     ! Need to call initialize_tau_emulators to load weights and tables from disk.
     type(Dense), allocatable, save :: q_all(:)
-    real(r8), dimension(:, :), allocatable, save :: input_scale_values
-    real(r8), dimension(:, :), allocatable, save :: output_scale_values
+    real(r8), dimension(:, :), allocatable, save :: qc_input_scale_values, nc_input_scale_values, nr_input_scale_values
+    real(r8), dimension(:, :), allocatable, save :: qc_output_scale_values, nc_output_scale_values, nr_output_scale_values
     type tau_emulators
         type(Dense), allocatable :: qc_regressor(:)
         type(Dense), allocatable :: nc_regressor(:)
@@ -53,24 +53,30 @@ contains
 
     ! end subroutine initialize_tau_emulators
 
-    subroutine initialize_tau_emulators(qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
-        stochastic_emulated_filename_output_scale, iulog, errstring)
+    subroutine initialize_tau_emulators(qc_regressor_path, nc_regressor_path, nr_regressor_path, qc_input_scale, &
+        qc_output_scale, nc_input_scale, nc_output_scale, nr_input_scale, nr_output_scale, iulog, errstring)
 
     ! Load neural network netCDF files and scaling values. Values are placed in to emulators,
     ! input_scale_values, and output_scale_values.
-    character(len=*), intent(in) ::  qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
-                                     stochastic_emulated_filename_output_scale
+    character(len=*), intent(in) ::  qc_regressor_path, nc_regressor_path, nr_regressor_path, & 
+                                     qc_input_scale, qc_output_scale, &
+                                     nc_input_scale, nc_output_scale, &
+                                     nr_input_scale, nr_output_scale
     integer,          intent(in)  :: iulog
     character(128),   intent(out) :: errstring  ! output status (non-blank for error return)
 
     errstring = ''
 
     write(iulog,*) "Begin loading neural nets"
-    write(iulog,*) "filename for qc_regressor nn should be named qc_regressor.nc"
-    write(iulog,*) "filename for nc_regressor nn should be named nc_regressor.nc"
-    write(iulog,*) "filename for nr_regressor nn should be named nr_regressor.nc"
-    write(iulog,*) "input scaler filepath is ", stochastic_emulated_filename_input_scale
-    write(iulog,*) "output scaler filepath is ", stochastic_emulated_filename_output_scale
+    write(iulog,*) "filename for qc_regressor nn should be named qc_regressor.nc", qc_regressor_path
+    write(iulog,*) "filename for nc_regressor nn should be named nc_regressor.nc", nc_regressor_path
+    write(iulog,*) "filename for nr_regressor nn should be named nr_regressor.nc", nr_regressor_path
+    write(iulog,*) "qc input scaler filepath is ", qc_input_scale
+    write(iulog,*) "qc output scaler filepath is ", qc_output_scale
+    write(iulog,*) "nc input scaler filepath is ", nc_input_scale
+    write(iulog,*) "nc output scaler filepath is ", nc_output_scale
+    write(iulog,*) "nr input scaler filepath is ", nr_input_scale
+    write(iulog,*) "nr output scaler filepath is ", nr_output_scale
     call init_neural_net(qc_regressor_path, batch_size, emulators%qc_regressor, iulog, errstring)
     write(iulog,*) "qc_regressor read in"
     call init_neural_net(nc_regressor_path, batch_size, emulators%nc_regressor, iulog, errstring)
@@ -80,8 +86,12 @@ contains
     if (trim(errstring) /= '') return
     write(iulog,*) "End loading neural nets"
     ! Load the scale values from a csv file.
-    call load_quantile_scale_values(stochastic_emulated_filename_input_scale, input_scale_values, iulog, errstring)
-    call load_quantile_scale_values(stochastic_emulated_filename_output_scale, output_scale_values, iulog, errstring)
+    call load_quantile_scale_values(qc_input_scale, qc_input_scale_values, iulog, errstring)
+    call load_quantile_scale_values(qc_output_scale, qc_output_scale_values, iulog, errstring)
+    call load_quantile_scale_values(nc_input_scale, nc_input_scale_values, iulog, errstring)
+    call load_quantile_scale_values(nc_output_scale, nc_output_scale_values, iulog, errstring)
+    call load_quantile_scale_values(nr_input_scale, nr_input_scale_values, iulog, errstring)
+    call load_quantile_scale_values(nr_output_scale, nr_output_scale_values, iulog, errstring)
     write(iulog,*) "Loaded neural nets scaling values"
 
     end subroutine initialize_tau_emulators
@@ -116,8 +126,9 @@ contains
         real(r8), intent(in) :: q_small
         real(r8), dimension(mgncol), intent(out) :: qc_tend, qr_tend, nc_tend, nr_tend
         integer(i8) :: i, j
-        real(r8), dimension(batch_size, num_inputs) :: nn_inputs, nn_quantile_inputs
-        real(r8), dimension(batch_size, num_outputs) :: nn_quantile_outputs, nn_outputs
+        real(r8), dimension(batch_size, num_inputs) :: nn_inputs, nn_quantile_qc_inputs, nn_quantile_nc_inputs, nn_quantile_nr_inputs
+        real(r8), dimension(batch_size, num_outputs) :: nn_quantile_qc_outputs, nn_quantile_nc_outputs, nn_quantile_nr_outputs, & 
+                                                        qc_nn_outputs, nc_nn_outputs, nr_nn_outputs
         real(r8), dimension(batch_size, 1) :: nn_quantile_qc_output, nn_quantile_nc_output, nn_quantile_nr_output, &
                                               nn_qc_output, nn_nc_output, nn_nr_output
         real(r8), parameter :: dt = 1800.0
@@ -148,16 +159,18 @@ contains
                 !     call write_test_values(filename, num_inputs, nn_inputs, batch_size)
                 ! endif
                 
-                call quantile_transform(nn_inputs, input_scale_values, nn_quantile_inputs)
+                call quantile_transform(nn_inputs, qc_input_scale_values, nn_quantile_qc_inputs)
+                call quantile_transform(nn_inputs, nc_input_scale_values, nn_quantile_nc_inputs)
+                call quantile_transform(nn_inputs, nr_input_scale_values, nn_quantile_nr_inputs)
 
                 ! if (firstcall) then
                 !     filename="test_quantile_input.dat"
                 !     call write_test_values(filename, num_inputs, nn_quantile_inputs, batch_size)
                 ! endif
 
-                call neural_net_predict(nn_quantile_inputs, emulators%qc_regressor, nn_quantile_qc_output, iulog)
-                call neural_net_predict(nn_quantile_inputs, emulators%nc_regressor, nn_quantile_nc_output, iulog)
-                call neural_net_predict(nn_quantile_inputs, emulators%nr_regressor, nn_quantile_nr_output, iulog)
+                call neural_net_predict(nn_quantile_qc_inputs, emulators%qc_regressor, nn_quantile_qc_output, iulog)
+                call neural_net_predict(nn_quantile_nc_inputs, emulators%nc_regressor, nn_quantile_nc_output, iulog)
+                call neural_net_predict(nn_quantile_nr_inputs, emulators%nr_regressor, nn_quantile_nr_output, iulog)
 
                 ! if (firstcall) then
                 !     filename="test_quantile_output.dat"
@@ -166,9 +179,9 @@ contains
                 !     call write_test_values(filename, num_outputs, nn_quantile_nr_output, batch_size)
                 ! endif
 
-                call quantile_inv_transform(nn_quantile_qc_output, output_scale_values, nn_qc_output)
-                call quantile_inv_transform(nn_quantile_nc_output, output_scale_values, nn_nc_output)
-                call quantile_inv_transform(nn_quantile_nr_output, output_scale_values, nn_nr_output)
+                call quantile_inv_transform(nn_quantile_qc_output, qc_output_scale_values, nn_qc_output)
+                call quantile_inv_transform(nn_quantile_nc_output, nc_output_scale_values, nn_nc_output)
+                call quantile_inv_transform(nn_quantile_nr_output, nr_output_scale_values, nn_nr_output)
 
                 ! if (firstcall) then
                 !     filename="test_output.dat"

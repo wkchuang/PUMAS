@@ -336,8 +336,9 @@ subroutine micro_pumas_init( &
      micro_mg_accre_sees_auto_in, micro_mg_implicit_fall_in, &
      nccons_in, nicons_in, ncnst_in, ninst_in, ngcons_in, ngnst_in, &
      nrcons_in, nrnst_in, nscons_in, nsnst_in, &
-     qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
-     stochastic_emulated_filename_output_scale, &
+     qc_regressor_path, nc_regressor_path, nr_regressor_path, &
+     qc_input_scale, qc_output_scale, nc_input_scale, &
+     nc_output_scale, nr_input_scale, nr_output_scale, &
      iulog, errstring)
 
   use micro_pumas_utils, only: micro_pumas_utils_init
@@ -422,9 +423,10 @@ subroutine micro_pumas_init( &
   logical, intent(in)   :: nscons_in
   real(r8), intent(in)  :: nsnst_in
 
-  character(len=*), intent(in) :: qc_regressor_path, nc_regressor_path, nr_regressor_path, &
-                                  stochastic_emulated_filename_input_scale, &
-                                  stochastic_emulated_filename_output_scale ! Files for emulated machine learning
+  character(len=*), intent(in) :: qc_regressor_path, nc_regressor_path, nr_regressor_path, & 
+                                  qc_input_scale, qc_output_scale, &
+                                  nc_input_scale, nc_output_scale, &
+                                  nr_input_scale, nr_output_scale ! Files for emulated machine learning
 
   integer, intent(in) :: iulog
   character(128), intent(out) :: errstring    ! Output status (non-blank for error return)
@@ -555,8 +557,10 @@ subroutine micro_pumas_init( &
   !$acc                accre_sees_auto)
 
   if (trim(warm_rain) == 'emulated') then
-      call initialize_tau_emulators(qc_regressor_path, nc_regressor_path, nr_regressor_path, stochastic_emulated_filename_input_scale, &
-                                    stochastic_emulated_filename_output_scale, iulog, errstring)
+      call initialize_tau_emulators(qc_regressor_path, nc_regressor_path, nr_regressor_path, &
+      qc_input_scale, qc_output_scale, nc_input_scale, nc_output_scale, &
+      nr_input_scale, nr_output_scale, &
+      iulog, errstring)
   end if
 
 end subroutine micro_pumas_init
