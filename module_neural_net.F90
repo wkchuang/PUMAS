@@ -283,28 +283,88 @@ contains
         if (trim(errstring) /= '') return
     end subroutine load_quantile_scale_values
 
-    subroutine linear_interp(x_in, xs, ys, y_in)
+    subroutine linear_interp_forward(x_in, xs, ys, y_in)
         real(kind = r8), dimension(:), intent(in) :: x_in
         real(kind = r8), dimension(:), intent(in) :: xs
         real(kind = r8), dimension(:), intent(in) :: ys
         real(kind = r8), dimension(size(x_in, 1)), intent(out) :: y_in
-        integer :: i, j, x_in_size, xs_size, x_pos
+        integer :: i, j, jl, jr, x_in_size, xs_size, x_pos
         x_in_size = size(x_in, 1)
         xs_size = size(xs, 1)
         do i = 1, x_in_size
-            if (x_in(i) <= xs(1)) then
-                y_in(i) = ys(1)
-            else if (x_in(i) >= xs(xs_size)) then
-                y_in(i) = ys(xs_size)
-            else
-                j = 1
-                do while (xs(j) < x_in(i))
-                    j = j + 1
-                end do
-                y_in(i) = (ys(j - 1) * (xs(j) - x_in(i)) + ys(j) * (x_in(i) - xs(j - 1))) / (xs(j) - xs(j - 1))
+            call binary_search_left(xs, x_in(i), jl)
+            call binary_search_right(xs, x_in(i), jr)
+            j = (jl + jr) / 2
+            y_in(i) = (ys(j - 1) * (xs(j) - x_in(i)) + ys(j) * (x_in(i) - xs(j - 1))) / (xs(j) - xs(j - 1))
+        end do
+    end subroutine linear_interp_forward
+
+    subroutine linear_interp_inverse(x_in, xs, ys, y_in)
+        real(kind = r8), dimension(:), intent(in) :: x_in
+        real(kind = r8), dimension(:), intent(in) :: xs
+        real(kind = r8), dimension(:), intent(in) :: ys
+        real(kind = r8), dimension(size(x_in, 1)), intent(out) :: y_in
+        integer :: i, j, jl, jr, x_in_size, xs_size, x_pos
+        x_in_size = size(x_in, 1)
+        xs_size = size(xs, 1)
+        do i = 1, x_in_size
+            call binary_search_left(xs, x_in(i), jl)
+            j = (jl + jr) / 2
+            y_in(i) = (ys(j - 1) * (xs(j) - x_in(i)) + ys(j) * (x_in(i) - xs(j - 1))) / (xs(j) - xs(j - 1))
+        end do
+    end subroutine linear_interp_inverse
+
+    subroutine binary_search_left(x, target, val_index)
+        ! binary_search left finds the leftmost index to insert
+        ! the target value in a sorted array x and returns
+        ! that index in val_index.
+        real(kind = r8), dimension(:), intent(in) :: x
+        real(kind = r8), intent(in) :: target
+        integer, intent(out) :: val_index
+        integer :: min_idx, max_idx, mid_idx
+        real(kind = r8) :: mid_val
+        min_idx = 1
+        max_idx = size(x, 1)
+        if (target <= x(min_idx)) then
+            max_idx = min_idx
+        end if
+        do while (min_idx < max_idx)
+            mid_idx = (max_idx - min_idx) / 2
+            mid_val = x(mid_idx)
+            if (mid_val < target) then
+                min_idx = mid_idx + 1
+            else if (mid_val >= target) then
+                max_idx = mid_idx - 1
             end if
         end do
-    end subroutine linear_interp
+        val_idx = min_idx
+    end subroutine binary_search_left
+
+    subroutine binary_search_right(x, target, val_index)
+        ! binary_search left finds the rightmost index to insert
+        ! the target value in a sorted array x and returns
+        ! that index in val_index.
+        real(kind = r8), dimension(:), intent(in) :: x
+        real(kind = r8), intent(in) :: target
+        integer, intent(out) :: val_index
+        integer :: min_idx, max_idx, mid_idx
+        real(kind = r8) :: mid_val
+        min_idx = 1
+        max_idx = size(x, 1)
+        if (target >= x(max_idx))
+            min_idx = max_idx
+        end if
+        do while (min_idx < max_idx)
+            mid_idx = (max_idx - min_idx) / 2
+            mid_val = x(mid_idx)
+            if (mid_val <= target) then
+                min_idx = mid_idx + 1
+            else if (mid_val > target) then
+                max_idx = mid_idx - 1
+            end if
+        end do
+        val_idx = max_idx
+    end subroutine binary_search_right
 
     subroutine quantile_transform(x_inputs, scale_values, x_transformed)
         real(kind = r8), dimension(:, :), intent(in) :: x_inputs
@@ -314,7 +374,7 @@ contains
         x_size = size(x_inputs, 1)
         scale_size = size(scale_values, 1)
         do j = 1, size(x_inputs, 2)
-            call linear_interp(x_inputs(:, j), scale_values(:, j + 1), &
+            call linear_interp_forward(x_inputs(:, j), scale_values(:, j + 1), &
                     scale_values(:, 1), x_transformed(:, j))
         end do
     end subroutine quantile_transform
@@ -327,7 +387,7 @@ contains
         x_size = size(x_inputs, 1)
         scale_size = size(scale_values, 1)
         do j = 1, size(x_inputs, 2)
-            call linear_interp(x_inputs(:, j), scale_values(:, 1), scale_values(:, j + 1), x_transformed(:, j))
+            call linear_interp_inverse(x_inputs(:, j), scale_values(:, 1), scale_values(:, j + 1), x_transformed(:, j))
         end do
     end subroutine quantile_inv_transform
 
