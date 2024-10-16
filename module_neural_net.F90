@@ -304,12 +304,11 @@ contains
         real(kind = r8), dimension(:), intent(in) :: xs
         real(kind = r8), dimension(:), intent(in) :: ys
         real(kind = r8), dimension(size(x_in, 1)), intent(out) :: y_in
-        integer :: i, j, jl, jr, x_in_size, xs_size, x_pos
+        integer :: i, j, x_in_size, xs_size, x_pos
         x_in_size = size(x_in, 1)
         xs_size = size(xs, 1)
         do i = 1, x_in_size
-            call binary_search_left(xs, x_in(i), jl)
-            j = (jl + jr) / 2
+            call binary_search_left(xs, x_in(i), j)
             y_in(i) = (ys(j - 1) * (xs(j) - x_in(i)) + ys(j) * (x_in(i) - xs(j - 1))) / (xs(j) - xs(j - 1))
         end do
     end subroutine linear_interp_inverse
