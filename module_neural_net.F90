@@ -320,7 +320,7 @@ contains
         real(kind = r8), dimension(:), intent(in) :: x
         real(kind = r8), intent(in) :: target
         integer, intent(out) :: val_index
-        integer :: min_idx, max_idx, mid_idx
+        integer :: min_idx, max_idx, mid_idx, val_idx
         real(kind = r8) :: mid_val
         min_idx = 1
         max_idx = size(x, 1)
@@ -346,11 +346,11 @@ contains
         real(kind = r8), dimension(:), intent(in) :: x
         real(kind = r8), intent(in) :: target
         integer, intent(out) :: val_index
-        integer :: min_idx, max_idx, mid_idx
+        integer :: min_idx, max_idx, mid_idx, val_idx
         real(kind = r8) :: mid_val
         min_idx = 1
         max_idx = size(x, 1)
-        if (target >= x(max_idx))
+        if (target >= x(max_idx)) then
             min_idx = max_idx
         end if
         do while (min_idx < max_idx)
