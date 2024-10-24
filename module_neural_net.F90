@@ -313,14 +313,14 @@ contains
         end do
     end subroutine linear_interp_inverse
 
-    subroutine binary_search_left(x, target, val_index)
+    subroutine binary_search_left(x, target, val_idx)
         ! binary_search left finds the leftmost index to insert
         ! the target value in a sorted array x and returns
         ! that index in val_index.
         real(kind = r8), dimension(:), intent(in) :: x
         real(kind = r8), intent(in) :: target
-        integer, intent(out) :: val_index
-        integer :: min_idx, max_idx, mid_idx, val_idx
+        integer, intent(out) :: val_idx
+        integer :: min_idx, max_idx, mid_idx
         real(kind = r8) :: mid_val
         min_idx = 1
         max_idx = size(x, 1)
@@ -339,14 +339,14 @@ contains
         val_idx = min_idx
     end subroutine binary_search_left
 
-    subroutine binary_search_right(x, target, val_index)
+    subroutine binary_search_right(x, target, val_idx)
         ! binary_search left finds the rightmost index to insert
         ! the target value in a sorted array x and returns
         ! that index in val_index.
         real(kind = r8), dimension(:), intent(in) :: x
         real(kind = r8), intent(in) :: target
-        integer, intent(out) :: val_index
-        integer :: min_idx, max_idx, mid_idx, val_idx
+        integer, intent(out) :: val_idx
+        integer :: min_idx, max_idx, mid_idx
         real(kind = r8) :: mid_val
         min_idx = 1
         max_idx = size(x, 1)
